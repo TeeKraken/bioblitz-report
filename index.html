@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Bioblitz Report: a printable nature report from your iNaturalist sightings</title>
+    <meta name="description" content="Turn your bioblitz's iNaturalist sightings into a tidy, printable nature report for the landowner: the numbers, your notable finds, and the full species list. Free, and your file never leaves your computer." />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f1efe7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#171a16" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <main id="main" tabindex="-1">
+      <header class="top no-print">
+        <h1><span class="logo" aria-hidden="true"></span>Bioblitz Report</h1>
+        <p class="lede">Turn your bioblitz's iNaturalist sightings into a tidy nature report to print and hand to the landowner. Your file stays on your computer; nothing is uploaded.</p>
+      </header>
+
+      <div class="layout">
+        <div class="controls no-print">
+          <details class="card how" id="how">
+            <summary><h2>1. Get your sightings from iNaturalist</h2></summary>
+            <ol class="steps">
+              <li>Sign in to iNaturalist (an account is needed to export) and open the <a href="https://www.inaturalist.org/observations/export" target="_blank" rel="noopener">export page</a>.</li>
+              <li>Under <b>Create a Query</b>, pick out your event's sightings. If your bioblitz had an iNaturalist project, paste the project's observations page address into the box. Otherwise choose the place and the dates of the event.</li>
+              <li>Under <b>Choose columns</b>, leave the ticks iNaturalist already sets. Then, under <b>Taxon Extras</b>, also tick these two, which start unticked:
+                <ul class="cols">
+                  <li><code>taxon_family_name</code>, so the list can be sorted by family</li>
+                  <li><code>taxon_species_name</code>, so subspecies count once, under their species</li>
+                </ul>
+              </li>
+              <li>Press <b>Create Export</b>. When it's ready, download the file. You can add the .zip here as it is, or unzip it and add the .csv inside.</li>
+            </ol>
+            <p class="hint">The columns this app reads: <code>scientific_name</code>, <code>common_name</code>, <code>iconic_taxon_name</code> (the group, like birds or plants), <code>quality_grade</code>, <code>observed_on</code>, the privacy columns <code>geoprivacy</code>, <code>taxon_geoprivacy</code> and <code>coordinates_obscured</code>, and the two extras above. It ignores everything else, including names, usernames and map points.</p>
+            <p class="hint"><b>Already exported without the extras?</b> Go back to the export page, set up the same query, tick the missing columns and create a new export. Your earlier export stays in iNaturalist's list too.</p>
+          </details>
+
+          <section class="card load" aria-labelledby="load-title">
+            <h2 id="load-title">2. Add your file</h2>
+            <div class="drop" id="drop">
+              <p>Drop your iNaturalist file here, or</p>
+              <div class="row-buttons">
+                <label class="btn btn-go file-btn">
+                  Choose file
+                  <input type="file" id="file" accept=".csv,.zip,text/csv,application/zip" />
+                </label>
+                <button type="button" class="btn btn-quiet" id="sample-btn">Try it with sample sightings</button>
+              </div>
+            </div>
+            <p class="status" id="load-status" aria-live="polite"></p>
+            <p class="error" id="load-error" role="alert"></p>
+            <div class="column-check" id="column-check" hidden></div>
+          </section>
+
+          <section class="card details" aria-labelledby="details-title" id="details-card" hidden>
+            <h2 id="details-title">3. Fill in the details</h2>
+            <label class="field"><span>Report title</span><input type="text" id="f-title" maxlength="120" autocomplete="off" /></label>
+            <label class="field"><span>Prepared for (the landowner)</span><input type="text" id="f-for" maxlength="120" autocomplete="off" /></label>
+            <label class="field"><span>Place</span><input type="text" id="f-place" maxlength="120" autocomplete="off" /></label>
+            <label class="field"><span>Date</span><input type="text" id="f-date" maxlength="80" autocomplete="off" /></label>
+            <label class="field"><span>Prepared by (optional)</span><input type="text" id="f-by" maxlength="120" autocomplete="off" /></label>
+            <p class="hint">The date is filled in from your sightings. Change any of these as you like.</p>
+
+            <fieldset class="choice">
+              <legend>Which sightings to count</legend>
+              <label><input type="radio" name="quality" value="no-casual" checked /> Confirmed and not-yet-confirmed sightings <span class="hint-inline">(recommended)</span></label>
+              <label><input type="radio" name="quality" value="research" /> Only sightings confirmed by other iNaturalist users ("research grade")</label>
+              <label><input type="radio" name="quality" value="all" /> Everything, including "casual" ones (planted or captive, or missing a photo or date)</label>
+            </fieldset>
+
+            <fieldset class="choice">
+              <legend>Sensitive species</legend>
+              <p class="hint">A report about one named property can give away where a rare plant or animal lives, even without a map. So sightings iNaturalist keeps hidden (marked obscured or private) are left out, along with every sighting of a species iNaturalist treats as sensitive.</p>
+              <label><input type="checkbox" id="include-hidden" /> Include them anyway</label>
+              <p class="warn" id="hidden-warn" hidden>Only do this if you're sure the landowner should know, and the report won't be shared further.</p>
+            </fieldset>
+          </section>
+
+          <section class="card notable" aria-labelledby="notable-title" id="notable-card" hidden>
+            <h2 id="notable-title">4. Pick notable finds</h2>
+            <p class="hint">The app can't know what's special on this land, so you choose. Tick the species to feature at the top of the report and add a short note to each, like why it matters or where it was seen.</p>
+            <label class="field"><span>Find a species</span><input type="search" id="notable-filter" autocomplete="off" /></label>
+            <ul class="pick" id="pick"></ul>
+            <p class="empty" id="pick-empty" hidden>No species match that search.</p>
+          </section>
+
+          <div class="card print-card" id="print-card" hidden>
+            <button type="button" class="btn btn-go btn-big" id="print-btn">Print or save as PDF</button>
+            <p class="hint">In the print window, choose your printer, or "Save as PDF" to email it. Nothing here is saved, so print before you close the page.</p>
+          </div>
+        </div>
+
+        <article class="report" id="report" aria-label="Your report" tabindex="-1">
+          <div class="report-empty no-print" id="report-empty">
+            <p class="empty-title">Your report will appear here.</p>
+            <p>Add your iNaturalist file, or try the sample sightings to see what a report looks like.</p>
+          </div>
+        </article>
+      </div>
+
+      <footer class="foot no-print">
+        <p>Your file is read inside this browser and never uploaded. The app has no account, cookies, analytics scripts or tracking. Our host, Vercel, keeps request logs that can include IP addresses and the site you came from. We only look at weekly totals of requests to load the app, grouped by that site, to see whether people find it. We don't look at individual requests.</p>
+        <p>Not made by or affiliated with iNaturalist. Identifications come from the iNaturalist community.</p>
+        <p>Made entirely by an AI (Claude, by Anthropic) from <a href="https://somebodybuildthis.dev/ideas/45-a-ready-to-print-nature-report-for-landowners-after-a-biobli">an idea on Somebody Build This</a>. <a href="https://github.com/TeeKraken/bioblitz-report">Open source</a>.</p>
+      </footer>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
