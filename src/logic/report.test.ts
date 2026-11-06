@@ -39,8 +39,29 @@ describe("identify", () => {
   it("treats a sighting with no species name as a broader group", () => {
     expect(identify({ scientific_name: "Bombus", taxon_species_name: "" }, true)).toEqual({ kind: "broad", name: "Bombus" });
   });
-  it("counts a hybrid as its own species-level entry", () => {
-    expect(identify({ scientific_name: "Quercus × bebbiana", taxon_species_name: "" }, true)).toEqual({ kind: "species", name: "Quercus × bebbiana" });
+  it("counts a species-level hybrid as a species only when taxon_hybrid_name names it", () => {
+    expect(identify({ scientific_name: "Quercus × bebbiana", taxon_species_name: "", taxon_hybrid_name: "Quercus × bebbiana" }, true)).toEqual({ kind: "species", name: "Quercus × bebbiana" });
+    expect(identify({ scientific_name: "Quercus × bebbiana", taxon_species_name: "" }, true)).toEqual({ kind: "broad", name: "Quercus × bebbiana" });
+  });
+  it("keeps genus hybrids (real iNaturalist names) out of the species count", () => {
+    // Anas × Cairina (taxon 545975) and × Hesperotropsis (taxon 1515670) are rank "genushybrid".
+    for (const name of ["Anas × Cairina", "× Hesperotropsis"]) {
+      expect(identify({ scientific_name: name, taxon_species_name: "", taxon_hybrid_name: "" }, true)).toEqual({ kind: "broad", name });
+      expect(identify({ scientific_name: name }, false)).toEqual({ kind: "broad", name });
+    }
+    const t = table(
+      [
+        { scientific_name: "Anas × Cairina", iconic_taxon_name: "Aves", taxon_family_name: "Anatidae", quality_grade: "needs_id" },
+        { scientific_name: "× Hesperotropsis", iconic_taxon_name: "Plantae", taxon_family_name: "Cupressaceae", quality_grade: "needs_id" },
+      ],
+      [...HEAD, "taxon_hybrid_name"],
+    );
+    const r = buildReport(t);
+    expect(r.species).toEqual([]);
+    expect(r.broad.map((b) => b.scientific)).toEqual(["Anas × Cairina", "× Hesperotropsis"]);
+  });
+  it("works out a species-level hybrid from the name when the extras are missing", () => {
+    expect(identify({ scientific_name: "Quercus × bebbiana" }, false)).toEqual({ kind: "species", name: "Quercus × bebbiana" });
   });
   it("works the species out from the scientific name when the extras column is missing", () => {
     expect(identify({ scientific_name: "Danaus plexippus plexippus" }, false)).toEqual({ kind: "species", name: "Danaus plexippus" });
@@ -86,6 +107,14 @@ describe("buildReport: counting", () => {
     expect(buildReport(table(rows)).qualityLeftOut).toBe(1);
     expect(buildReport(table(rows), { includeHidden: false, quality: "research" }).counted).toBe(1);
     expect(buildReport(table(rows), { includeHidden: false, quality: "all" }).counted).toBe(3);
+  });
+
+  it("research grade only never counts a blank or missing grade", () => {
+    const research = { includeHidden: false, quality: "research" as const };
+    expect(buildReport(table([robin, { ...monarch, quality_grade: "" }]), research).counted).toBe(1);
+    const noGrade = table([robin, monarch], HEAD.filter((h) => h !== "quality_grade"));
+    expect(buildReport(noGrade, research).counted).toBe(0);
+    expect(buildReport(noGrade).counted).toBe(2);
   });
 
   it("records the date range of counted sightings", () => {

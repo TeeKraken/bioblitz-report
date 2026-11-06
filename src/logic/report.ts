@@ -18,6 +18,8 @@ export const COL = {
   obscured: "coordinates_obscured",
   family: "taxon_family_name",
   species: "taxon_species_name",
+  /** Taxon Extras: set when the sighting is a species-level hybrid like "Quercus × bebbiana". */
+  hybrid: "taxon_hybrid_name",
 } as const;
 
 /** Taxon Extras rank columns, broadest first, used to name the rank of a broad identification. */
@@ -160,22 +162,27 @@ export type Identification =
 /**
  * Which species a sighting counts toward. Uses taxon_species_name when the file
  * has it (iNaturalist fills it for species and anything below, like subspecies
- * and varieties). Otherwise the species is the first two words of a scientific
- * name like "Danaus plexippus plexippus". Hybrids ("Quercus × bebbiana") count
- * as their own species-level entry. A one-word name ("Bombus") is a broader group.
+ * and varieties). A species-level hybrid ("Quercus × bebbiana") has no species
+ * but is named in taxon_hybrid_name, so it counts as its own entry. Anything else
+ * with a blank species name, such as a genus hybrid ("Anas × Cairina",
+ * "× Hesperotropsis") or a genus ("Bombus"), is a broader group.
+ *
+ * Without the taxon_species_name column, the species is the first two words of a
+ * name like "Danaus plexippus plexippus"; "Genus × epithet" is a species-level
+ * hybrid; anything else (one word, or a capitalised name after ×) is broader.
  */
 export function identify(rec: Record<string, string>, hasSpeciesColumn: boolean): Identification {
   const sci = val(rec, COL.scientific).replace(/\s+/g, " ");
-  const isHybrid = /\s×\s|^×/.test(sci);
   if (hasSpeciesColumn) {
     const sp = val(rec, COL.species).replace(/\s+/g, " ");
     if (sp) return { kind: "species", name: sp };
-    if (sci && isHybrid) return { kind: "species", name: sci };
+    const hybrid = val(rec, COL.hybrid).replace(/\s+/g, " ");
+    if (sci && hybrid && hybrid === sci) return { kind: "species", name: sci };
     if (sci) return { kind: "broad", name: sci };
     return { kind: "none" };
   }
   if (!sci) return { kind: "none" };
-  if (isHybrid) return { kind: "species", name: sci };
+  if (/^[A-Z][a-zë-]+ × [a-zë-]+$/.test(sci)) return { kind: "species", name: sci };
   const words = sci.split(" ");
   if (words.length >= 2 && /^[A-Z][a-zë-]+$/.test(words[0]) && /^[a-zë-]+$/.test(words[1])) {
     return { kind: "species", name: `${words[0]} ${words[1]}` };
@@ -196,7 +203,8 @@ function rankOf(rec: Record<string, string>, name: string): string {
 
 function passesQuality(rec: Record<string, string>, quality: Quality): boolean {
   const q = val(rec, COL.quality).toLowerCase();
-  if (quality === "all" || q === "") return true;
+  if (quality === "all") return true;
+  // Strict: a blank or missing grade is not research grade.
   if (quality === "research") return q === "research";
   return q !== "casual";
 }

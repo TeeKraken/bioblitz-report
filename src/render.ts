@@ -34,7 +34,7 @@ function sciName(name: string): HTMLElement {
 
 function unconfirmedMark(row: SpeciesRow, show: boolean): Child {
   if (!show || row.research > 0) return null;
-  return h("span", { class: "mark", title: "Not yet confirmed" }, "*");
+  return h("span", { class: "mark", title: "Not marked Research Grade" }, "*");
 }
 
 export interface RenderInput {
@@ -187,7 +187,7 @@ export function renderReport(target: HTMLElement, { report, details, notable, is
     );
   }
   if (anyUnconfirmed) {
-    list.append(h("p", { class: "small" }, "* Not yet confirmed: no other iNaturalist user has agreed with the identification yet."));
+    list.append(h("p", { class: "small" }, "* No sighting of this species in the report is marked Research Grade on iNaturalist."));
   }
   sections.push(list);
 

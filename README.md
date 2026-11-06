@@ -17,7 +17,7 @@ Live: https://bioblitz-report.vercel.app
 - **Notable finds you choose.** The app can't know what's special on that land, so you tick the species to feature and add a short note to each.
 - **Plain statement** at the top: the report lists what volunteers saw, and is not a professional survey.
 - **Print-friendly.** Title, landowner, place, date (filled in from the sightings) and organizer are editable. The printed page has the numbers, the notable finds, then the full list sorted by group and family with common and scientific names. Print it, or choose "Save as PDF" in the print window.
-- **Which sightings count:** confirmed and not-yet-confirmed sightings (the default, leaving out iNaturalist's "casual" ones: planted, captive, or missing a photo or date), research grade only, or everything. Species with no confirmed sighting are marked with an asterisk.
+- **Which sightings count:** everything except iNaturalist's "casual" sightings (the default; casual covers, for example, planted or captive ones and ones with no photo or date), only sightings marked Research Grade, or everything. "Research Grade only" counts strictly `quality_grade` = `research`, and is switched off with an explanation when the file has no `quality_grade` column. Species with no sighting marked Research Grade in the report get an asterisk.
 - **Protects sensitive species.** By default it leaves out every sighting whose location iNaturalist hides (`geoprivacy` or `taxon_geoprivacy` of obscured or private, or `coordinates_obscured`), and every sighting of a species iNaturalist treats as sensitive, even one that slipped through unhidden. The report says how many were left out. The organizer can include them with a clear warning. If the file has none of those columns, the app warns before you share.
 - **Never shows people or places from the file.** Observer names, usernames, coordinates, place names and descriptions are never read into the report.
 - **Try it first** with a sample file of made-up sightings (`public/sample-observations.csv`, synthetic: no real observations or users).
@@ -38,8 +38,9 @@ Column names are taken from iNaturalist's own export code (`Observation::BASIC_C
 | `geoprivacy`, `taxon_geoprivacy`, `coordinates_obscured` | Geo | leaving hidden sightings out |
 | `taxon_family_name` | Taxon Extras (tick it) | sorting by family |
 | `taxon_species_name` | Taxon Extras (tick it) | folding subspecies into their species |
+| `taxon_hybrid_name` | Taxon Extras (optional) | counting species-level hybrids like *Quercus × bebbiana* as species |
 
-Without `taxon_species_name` the species is worked out from the first two words of the scientific name. Without `iconic_taxon_name` the group is worked out from `taxon_kingdom_name`, `taxon_phylum_name` and `taxon_class_name` if those were exported. Everything else in the file is ignored.
+With `taxon_species_name`, any sighting where it's blank (a genus, a family, or a genus hybrid like *Anas × Cairina*) goes in the broader list, unless `taxon_hybrid_name` names it as a species-level hybrid. Without `taxon_species_name` the species is worked out from the first two words of the scientific name. Without `iconic_taxon_name` the group is worked out from `taxon_kingdom_name`, `taxon_phylum_name` and `taxon_class_name` if those were exported. Everything else in the file is ignored.
 
 ## Develop
 

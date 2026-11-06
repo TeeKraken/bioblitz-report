@@ -65,9 +65,10 @@
 
             <fieldset class="choice">
               <legend>Which sightings to count</legend>
-              <label><input type="radio" name="quality" value="no-casual" checked /> Confirmed and not-yet-confirmed sightings <span class="hint-inline">(recommended)</span></label>
-              <label><input type="radio" name="quality" value="research" /> Only sightings confirmed by other iNaturalist users ("research grade")</label>
-              <label><input type="radio" name="quality" value="all" /> Everything, including "casual" ones (planted or captive, or missing a photo or date)</label>
+              <label><input type="radio" name="quality" value="no-casual" checked /> All sightings except "casual" ones <span class="hint-inline">(recommended)</span></label>
+              <label id="research-label"><input type="radio" name="quality" value="research" id="quality-research" /> Only sightings marked "Research Grade" on iNaturalist</label>
+              <p class="hint" id="research-off" hidden>"Research Grade only" needs the <code>quality_grade</code> column, which isn't in this file. To use it, export again from iNaturalist with <code>quality_grade</code> ticked (under Basic).</p>
+              <label><input type="radio" name="quality" value="all" /> Everything, including "casual" ones (iNaturalist marks a sighting casual when, for example, it's planted or captive, or has no photo or date)</label>
             </fieldset>
 
             <fieldset class="choice">

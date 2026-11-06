@@ -4,6 +4,7 @@ import { buildReport, formatDateRange, type Options, type Quality, type Report }
 import { groupLabel } from "./logic/groups";
 import { isZip, readCsvFromZip, ZipError } from "./logic/zip";
 import { h, renderReport, type Details } from "./render";
+import { createImporter } from "./importer";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -22,6 +23,8 @@ const pickEmpty = $("pick-empty");
 const notableFilter = $<HTMLInputElement>("notable-filter");
 const includeHidden = $<HTMLInputElement>("include-hidden");
 const hiddenWarn = $("hidden-warn");
+const researchRadio = $<HTMLInputElement>("quality-research");
+const researchOff = $("research-off");
 const fields = {
   title: $<HTMLInputElement>("f-title"),
   landowner: $<HTMLInputElement>("f-for"),
@@ -137,8 +140,20 @@ function drawPicker(): void {
   pickEmpty.hidden = rows.length > 0;
 }
 
+/** "Research Grade only" can't work without the quality_grade column, so it's switched off then. */
+function syncResearchOption(): void {
+  const hasQuality = !!state.table?.headers.some((x) => x.trim().toLowerCase() === "quality_grade");
+  researchRadio.disabled = !hasQuality;
+  researchOff.hidden = hasQuality;
+  if (!hasQuality && state.options.quality === "research") {
+    state.options = { ...state.options, quality: "no-casual" };
+    document.querySelector<HTMLInputElement>('input[name="quality"][value="no-casual"]')!.checked = true;
+  }
+}
+
 function recompute(): void {
   if (!state.table) return;
+  syncResearchOption();
   state.report = buildReport(state.table, state.options);
   if (!state.dateEdited) fields.date.value = formatDateRange(state.report.firstDate, state.report.lastDate);
   drawColumnCheck(state.report);
@@ -170,6 +185,11 @@ function loadText(text: string, label: string, isSample: boolean): void {
   state.picked = [];
   state.notes = new Map();
   state.dateEdited = false;
+  // Permission to show sensitive species is for one report only: every new
+  // file or sample starts back at the safe default.
+  state.options = { ...state.options, includeHidden: false };
+  includeHidden.checked = false;
+  hiddenWarn.hidden = true;
   notableFilter.value = "";
   if (isSample) {
     fields.title.value = "Willow Bend Farm bioblitz";
@@ -190,16 +210,45 @@ function loadText(text: string, label: string, isSample: boolean): void {
   printCard.hidden = false;
 }
 
-async function loadFile(file: File): Promise<void> {
+interface Loaded {
+  text: string;
+  label: string;
+  isSample: boolean;
+}
+
+class LoadError extends Error {}
+
+const importer = createImporter<Loaded>({
+  commit: ({ text, label, isSample }) => loadText(text, label, isSample),
+  fail: (err) => showError(err instanceof Error ? err.message : String(err)),
+});
+
+function loadFile(file: File): Promise<boolean> {
   loadError.textContent = "";
   loadStatus.textContent = `Reading ${file.name}…`;
-  try {
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    const text = isZip(bytes) ? await readCsvFromZip(bytes) : new TextDecoder().decode(bytes);
-    loadText(text, file.name, false);
-  } catch (err) {
-    showError(err instanceof ZipError ? err.message : `Couldn't read ${file.name}. Check it's the .csv or .zip file from iNaturalist and try again.`);
-  }
+  return importer.run(async () => {
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const text = isZip(bytes) ? await readCsvFromZip(bytes) : new TextDecoder().decode(bytes);
+      return { text, label: file.name, isSample: false };
+    } catch (err) {
+      throw new LoadError(err instanceof ZipError ? err.message : `Couldn't read ${file.name}. Check it's the .csv or .zip file from iNaturalist and try again.`);
+    }
+  });
+}
+
+function loadSample(): Promise<boolean> {
+  loadError.textContent = "";
+  loadStatus.textContent = "Loading the sample sightings…";
+  return importer.run(async () => {
+    try {
+      const res = await fetch("/sample-observations.csv");
+      if (!res.ok) throw new Error(String(res.status));
+      return { text: await res.text(), label: "the sample sightings", isSample: true };
+    } catch {
+      throw new LoadError("Couldn't load the sample sightings. Check your connection and try again.");
+    }
+  });
 }
 
 fileInput.addEventListener("change", () => {
@@ -223,16 +272,7 @@ drop.addEventListener("drop", (e) => {
 window.addEventListener("dragover", (e) => e.preventDefault());
 window.addEventListener("drop", (e) => e.preventDefault());
 
-sampleBtn.addEventListener("click", async () => {
-  loadError.textContent = "";
-  try {
-    const res = await fetch("/sample-observations.csv");
-    if (!res.ok) throw new Error(String(res.status));
-    loadText(await res.text(), "the sample sightings", true);
-  } catch {
-    showError("Couldn't load the sample sightings. Check your connection and try again.");
-  }
-});
+sampleBtn.addEventListener("click", () => void loadSample());
 
 for (const f of Object.values(fields)) {
   f.addEventListener("input", () => {
