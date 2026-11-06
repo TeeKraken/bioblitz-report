@@ -80,11 +80,23 @@ function drawReport(): void {
 function drawColumnCheck(report: Report): void {
   const { missing, noPrivacyColumns } = report.columns;
   columnCheck.replaceChildren();
-  if (!missing.length) {
+  const hasHybridColumn = !!state.table?.headers.some((x) => x.trim().toLowerCase() === "taxon_hybrid_name");
+  const hybridNote =
+    report.unresolvedHybrids > 0 && !hasHybridColumn
+      ? h(
+          "p",
+          { class: "hint" },
+          'Some names in this file are hybrids (they have a × in them). They\'re listed under "Other identifications" because the export doesn\'t say whether they\'re species-level hybrids. To count species-level hybrids as species, export again with ',
+          h("code", {}, "taxon_hybrid_name"),
+          ' ticked under "Taxon Extras".',
+        )
+      : null;
+  if (!missing.length && !hybridNote) {
     columnCheck.hidden = true;
     return;
   }
   columnCheck.hidden = false;
+  if (hybridNote) columnCheck.append(hybridNote);
   if (noPrivacyColumns) {
     columnCheck.append(
       h(

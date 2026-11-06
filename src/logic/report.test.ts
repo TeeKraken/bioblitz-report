@@ -59,6 +59,8 @@ describe("identify", () => {
     const r = buildReport(t);
     expect(r.species).toEqual([]);
     expect(r.broad.map((b) => b.scientific)).toEqual(["Anas × Cairina", "× Hesperotropsis"]);
+    expect(r.unresolvedHybrids).toBe(2);
+    expect(buildReport(table([robin, bombus])).unresolvedHybrids).toBe(0);
   });
   it("works out a species-level hybrid from the name when the extras are missing", () => {
     expect(identify({ scientific_name: "Quercus × bebbiana" }, false)).toEqual({ kind: "species", name: "Quercus × bebbiana" });

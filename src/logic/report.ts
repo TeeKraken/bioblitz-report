@@ -99,6 +99,8 @@ export interface Report {
   species: SpeciesRow[];
   broad: BroadRow[];
   groups: GroupCount[];
+  /** Broader entries with × in the name: maybe species-level hybrids the export can't confirm. */
+  unresolvedHybrids: number;
   /** Sightings with no identification at all (counted in `counted`, not listed). */
   unidentified: number;
   /** Left out because iNaturalist hides their location, or the species is sensitive. */
@@ -245,6 +247,7 @@ export function buildReport(table: Table, options: Options = DEFAULT_OPTIONS): R
     broad: [],
     groups: [],
     unidentified: 0,
+    unresolvedHybrids: 0,
     hiddenLeftOut: 0,
     qualityLeftOut: 0,
     firstDate: null,
@@ -318,6 +321,7 @@ export function buildReport(table: Table, options: Options = DEFAULT_OPTIONS): R
   report.species = [...species.values()]
     .map(({ scientific, common, family, group, sightings, research }) => ({ scientific, common, family, group, sightings, research }))
     .sort(compareRows);
+  report.unresolvedHybrids = [...broad.keys()].filter((name) => name.includes("×")).length;
   report.broad = [...broad.values()]
     .map(({ scientific, common, rank, family, group, sightings }) => ({ scientific, common, rank, family, group, sightings }))
     .sort(compareRows);

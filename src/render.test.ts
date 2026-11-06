@@ -60,7 +60,8 @@ describe("renderReport", () => {
     expect(robin?.querySelector("i")?.textContent).toBe("Turdus migratorius");
   });
 
-  it("lists broad identifications separately", () => {
+  it("lists broad identifications separately, under Other identifications", () => {
+    expect(el.querySelector("#r-broad")?.textContent).toBe("Other identifications");
     const broad = el.querySelector(".broad")?.textContent ?? "";
     expect(broad).toContain("Bumble Bees (genus Bombus)");
     expect(broad).toContain("Butterflies and Moths (order Lepidoptera)");

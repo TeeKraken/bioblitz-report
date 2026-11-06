@@ -12,7 +12,7 @@ Live: https://bioblitz-report.vercel.app
 
 - **Reads the iNaturalist export in your browser.** Add the `.zip` iNaturalist gives you, or the `.csv` inside it. The file is never uploaded anywhere.
 - **Shows you which columns to tick** on iNaturalist's export page, and tells you what the report loses (and how to export again) when helpful columns are missing.
-- **Counts species properly.** Subspecies and varieties count once, under their species. Sightings identified only to a broader group (like "Bumble Bees, genus *Bombus*") are listed separately and aren't counted as extra species. Sightings with no identification yet are counted as sightings only.
+- **Counts species properly.** Subspecies and varieties count once, under their species. Sightings identified above species level (like "Bumble Bees, genus *Bombus*"), or to a rank the export doesn't show, are listed under "Other identifications" and aren't counted as extra species. If hybrid names (with ×) end up there and `taxon_hybrid_name` wasn't exported, the app suggests ticking it. Sightings with no identification yet are counted as sightings only.
 - **The numbers:** species, sightings and groups, plus a table of species and sightings per group (birds, mammals, insects, plants, fungi and lichens, and so on).
 - **Notable finds you choose.** The app can't know what's special on that land, so you tick the species to feature and add a short note to each.
 - **Plain statement** at the top: the report lists what volunteers saw, and is not a professional survey.

@@ -118,6 +118,21 @@ describe("loading a new dataset", () => {
     expect($("load-error").textContent).toBe("");
   });
 
+  it("suggests the hybrid column when unresolved hybrids are in the file", async () => {
+    const f = slowFile("hybrids.csv", `${HEAD}\nQuercus × bebbiana,Bebb's Oak,Plantae,research,,,false,Fagaceae,\n`);
+    choose(f.file);
+    f.release();
+    await vi.waitFor(() => expect($("load-status").textContent).toContain("Read hybrids.csv:"));
+    expect($("column-check").hidden).toBe(false);
+    expect($("column-check").textContent).toContain("taxon_hybrid_name");
+    expect(reportText()).toContain("Other identifications");
+    const g = slowFile("plain.csv", otherFarm);
+    choose(g.file);
+    g.release();
+    await vi.waitFor(() => expect($("load-status").textContent).toContain("Read plain.csv:"));
+    expect($("column-check").textContent).not.toContain("taxon_hybrid_name");
+  });
+
   it("switches off 'Research Grade only' when the file has no quality_grade column", async () => {
     const research = $<HTMLInputElement>("quality-research");
     research.checked = true;

@@ -111,7 +111,7 @@ export function renderReport(target: HTMLElement, { report, details, notable, is
             { class: "small" },
             [
               report.broad.length
-                ? `${plural(report.broad.reduce((n, b) => n + b.sightings, 0), "sighting was", "sightings were")} identified only to a broader group, like a genus or family. They're listed after the species and not counted as extra species.`
+                ? `${plural(report.broad.reduce((n, b) => n + b.sightings, 0), "sighting was", "sightings were")} identified above species level (like a genus or family), or to a rank the export doesn't show. They're listed under "Other identifications" and not counted as extra species.`
                 : "",
               report.unidentified ? `${plural(report.unidentified, "sighting is", "sightings are")} still waiting for an identification.` : "",
             ]
@@ -196,12 +196,12 @@ export function renderReport(target: HTMLElement, { report, details, notable, is
       h(
         "section",
         { class: "r-section broad", "aria-labelledby": "r-broad" },
-        h("h3", { id: "r-broad" }, "Also seen, identified only to a broader group"),
-        h("p", { class: "small" }, "These might be species already on the list above, or different ones. They aren't counted as extra species."),
+        h("h3", { id: "r-broad" }, "Other identifications"),
+        h("p", { class: "small" }, "Sightings identified above species level, like a genus or family, or to a rank the export doesn't show. They might be species already on the list above, or different ones, so they aren't counted as extra species."),
         h(
           "table",
           { class: "species broad-table" },
-          h("caption", { class: "visually-hidden" }, "Sightings identified to a broader group"),
+          h("caption", { class: "visually-hidden" }, "Other identifications"),
           h(
             "thead",
             {},
